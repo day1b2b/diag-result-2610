@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>[HLDS - 전사 AI 활용 실무 과정] 사전 진단 결과 조회</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  /* HLDS 키컬러(#B71549)를 채도·명도를 낮춰 사용 */
+  :root {
+    --key: #A32D52; --key-deep: #7A2340; --key-tint: #F3E3E9;
+    --ink: #221D1F; --sub: #6B6366; --line: #221D1F; --hair: #DED6D9; --track: #EEE8EA; --paper: #FFFFFF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 19px; }
+  body {
+    background: #EEEBEC; color: var(--ink);
+    font-family: "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    font-variant-numeric: tabular-nums; line-height: 1.5; word-break: keep-all;
+    -webkit-font-smoothing: antialiased;
+  }
+  [hidden] { display: none !important; }
+  .page {
+    width: 900px; max-width: 100%; margin: 0 auto 40px; background: var(--paper);
+    padding: 56px 64px 48px; border-top: 10px solid var(--key);
+  }
+  .toolbar { width: 900px; max-width: 100%; margin: 24px auto 14px; display: flex; justify-content: flex-end; gap: 10px; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;
+    font: inherit; font-size: 0.85rem; font-weight: 700; padding: 11px 20px; border: 0;
+  }
+  .btn.primary { color: #FFFFFF; background: var(--key); }
+  .btn.primary:hover { background: var(--key-deep); }
+  .btn.ghost { color: var(--ink); background: #FFFFFF; border: 1px solid var(--hair); }
+  .btn.ghost:hover { border-color: var(--ink); }
+  .btn:disabled { opacity: 0.6; cursor: progress; }
+  .btn svg { width: 16px; height: 16px; }
+  .eyebrow { display: flex; justify-content: flex-end; align-items: center; }
+  .eyebrow .logo { height: 26px; width: auto; display: block; }
+  h1 { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.22; margin: 18px 0 38px; }
+
+  /* 1) 정보 입력 */
+  .gate { margin-top: 64px; }
+  .gate .page { width: 640px; padding: 48px 56px 40px; }
+  .gate h1 { font-size: 2.1rem; margin-bottom: 14px; }
+  .gate .lead { font-size: 1rem; color: var(--sub); margin-bottom: 34px; }
+  .field { margin-bottom: 22px; }
+  .field label { display: block; font-size: 0.88rem; font-weight: 700; margin-bottom: 8px; }
+  .field input {
+    width: 100%; font: inherit; font-size: 1.15rem; font-weight: 600; color: var(--ink);
+    padding: 14px 16px; border: 1.5px solid var(--hair); background: #FFFFFF; outline: none;
+  }
+  .field input:focus { border-color: var(--key); }
+  .field .hint { font-size: 0.8rem; color: var(--sub); margin-top: 6px; }
+  .gate .btn.primary { width: 100%; font-size: 1.05rem; padding: 16px 20px; margin-top: 6px; }
+  .msg { min-height: 1.6em; margin-top: 14px; font-size: 0.9rem; font-weight: 600; color: var(--key-deep); }
+  .gate footer { margin-top: 30px; display: block; }
+
+  /* 2) 결과 */
+  .sec-title { display: flex; align-items: baseline; gap: 14px; border-top: 3px solid var(--line); padding-top: 12px; margin-bottom: 18px; font-size: 1.05rem; font-weight: 700; }
+  .sec-title .no { font-size: 0.82rem; font-weight: 700; color: var(--key); letter-spacing: 0.08em; }
+  section { margin-bottom: 40px; }
+  .ident { display: grid; grid-template-columns: 1fr 1fr 1.25fr; border-bottom: 1px solid var(--hair); }
+  .ident div { padding: 4px 0 18px; }
+  .ident div + div { border-left: 1px solid var(--hair); padding-left: 24px; }
+  .label { font-size: 0.88rem; font-weight: 600; color: var(--sub); margin-bottom: 6px; }
+  .val { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.02em; }
+  .val.class { display: inline; color: var(--key-deep); background: linear-gradient(transparent 55%, var(--key-tint) 55%); padding: 0 4px; }
+  .total { display: grid; grid-template-columns: auto 1fr; gap: 48px; align-items: end; }
+  .big { font-size: 6.2rem; font-weight: 800; letter-spacing: -0.05em; line-height: 0.9; }
+  .big span { font-size: 1.6rem; font-weight: 600; color: var(--sub); letter-spacing: 0; margin-left: 6px; }
+  .cmp { padding-bottom: 6px; }
+  .cmp .line1 { font-size: 1.15rem; font-weight: 700; margin-bottom: 4px; color: var(--key-deep); }
+  .cmp .line2 { font-size: 1rem; color: var(--sub); }
+  .scale { position: relative; height: 26px; margin-top: 30px; }
+  .bar { position: relative; height: 16px; background: var(--track); }
+  .bar .fill { position: absolute; top: 0; bottom: 0; left: 0; background: var(--key); }
+  .bar .avg { position: absolute; top: -8px; bottom: -8px; width: 6px; margin-left: -3px; background: #FFFFFF; border: 1.5px solid var(--ink); }
+  .bar .avg .lbl { position: absolute; top: -30px; left: 50%; transform: translateX(-50%); line-height: 1.5; font-size: 0.8rem; font-weight: 700; white-space: nowrap; color: #FFFFFF; background: var(--ink); padding: 0 6px; }
+  .ticks { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--sub); margin-top: 8px; }
+  .area { display: grid; grid-template-columns: 1.35fr 1.45fr 0.75fr 0.8fr; gap: 24px; align-items: center; padding: 22px 0; border-bottom: 1px solid var(--hair); }
+  .area:first-of-type { padding-top: 4px; }
+  .area .name { font-size: 1.2rem; font-weight: 800; }
+  .area .name em { font-style: normal; color: var(--key); font-weight: 800; margin-right: 6px; }
+  .area .desc { font-size: 0.88rem; color: var(--sub); margin-top: 4px; line-height: 1.45; }
+  .area .bar { margin-top: 22px; }
+  .area .score { font-size: 2.1rem; font-weight: 800; letter-spacing: -0.03em; text-align: right; line-height: 1; }
+  .area .score span { font-size: 0.95rem; color: var(--sub); font-weight: 600; letter-spacing: 0; margin-left: 2px; }
+  .area .delta { text-align: right; }
+  .area .delta b { display: block; font-size: 1.35rem; font-weight: 800; }
+  .area .delta b.up { color: var(--key-deep); }
+  .area .delta small { font-size: 0.84rem; color: var(--sub); }
+  .legend { display: flex; gap: 26px; font-size: 0.88rem; color: var(--sub); margin-top: 14px; }
+  .legend i { display: inline-block; width: 22px; height: 10px; background: var(--key); vertical-align: middle; margin-right: 8px; }
+  .legend i.mk { width: 6px; height: 18px; background: #FFFFFF; border: 1.5px solid var(--ink); margin: 0 10px 0 8px; }
+  footer { border-top: 1px solid var(--ink); padding-top: 14px; font-size: 0.86rem; color: var(--sub); line-height: 1.7; display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; }
+  footer .date { font-weight: 600; color: var(--ink); white-space: nowrap; letter-spacing: 0.02em; }
+
+  @page { size: A4; margin: 10mm; }
+  @media print {
+    body { background: #fff; }
+    .toolbar, #gate { display: none !important; }
+    .page { width: 900px; margin: 0 auto; padding: 30px 44px 22px; zoom: 0.78; }
+    h1 { margin: 10px 0 28px; }
+    section { margin-bottom: 28px; }
+    .area { padding: 16px 0; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+  @media screen and (max-width: 760px) {
+    html { font-size: 17px; }
+    .page, .gate .page { margin: 0; padding: 32px 18px; width: auto; }
+    .gate { margin-top: 0; }
+    .toolbar { margin: 0; padding: 12px 16px; }
+    .ident { grid-template-columns: 1fr 1fr; }
+    .ident div:nth-child(3) { grid-column: 1 / -1; border-left: 0; padding-left: 0; border-top: 1px solid var(--hair); padding-top: 14px; }
+    .total { grid-template-columns: 1fr; gap: 12px; }
+    .area { grid-template-columns: 1fr auto; }
+    .area .barwrap { grid-column: 1 / -1; order: 3; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 1) 정보 입력 -->
+<div id="gate" class="gate">
+  <main class="page">
+    <div class="eyebrow"><img class="logo" src="data:image/png;base64,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" alt="FAST CAMPUS"></div>
+    <h1>[HLDS - 전사 AI 활용 실무 과정]<br>사전 진단 결과 조회</h1>
+    <p class="lead">이름과 휴대폰 번호 뒤 4자리를 입력하면 본인의 진단 결과를 확인할 수 있습니다.</p>
+    <form id="lookupForm" autocomplete="off" novalidate>
+      <div class="field">
+        <label for="inName">이름</label>
+        <input id="inName" name="name" type="text" placeholder="예) 홍길동" maxlength="20">
+      </div>
+      <div class="field">
+        <label for="inPhone">휴대폰 번호 뒤 4자리</label>
+        <input id="inPhone" name="phone" type="password" inputmode="numeric" placeholder="숫자 4자리" maxlength="4">
+        <p class="hint">'-' 없이 숫자 4자리만 입력해 주세요.</p>
+      </div>
+      <button type="submit" class="btn primary" id="lookupBtn">조회하기</button>
+      <p class="msg" id="msg" role="alert"></p>
+    </form>
+    <footer>
+      <p>※ 입력하신 정보는 결과 조회에만 사용되며 저장되지 않습니다.<br>
+      ※ 조회가 되지 않으면 교육 담당자에게 문의해 주세요.</p>
+    </footer>
+  </main>
+</div>
+
+<!-- 2) 진단 결과 -->
+<div id="result" hidden>
+  <div class="toolbar">
+    <button type="button" class="btn ghost" id="backBtn">다른 정보로 조회</button>
+    <button type="button" class="btn primary" id="pdfBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+      PDF로 다운로드
+    </button>
+  </div>
+  <main class="page" id="report"></main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(function () {
+  // ===== 데이터: 이름+번호 뒤 4자리로만 열리는 암호화 레코드 (원문은 파일 안에 없음) =====
+  var DATA = {"salt":"1dab2255421e9c9bab599e55","iter":20000,"records":{"d3b53f994d281aeeb362d2e7":{"iv":"zpNz/X14CR4ThwONbxI1nQ==","ct":"dTYdosdIVlcNAjuLtz3ciim0m9vrUn0SvrptGVDVn5RjFamQXDHIs0cZYlJTKObf2uESL2oBqZG1or0rqjGxYZV/tq/D6zXIf0b8fMzXotW85tzEYXMibpme0nKY6q/T"},"1f76b0416595a40de5771d54":{"iv":"MIbGPIAIbmArsDF/M2phqg==","ct":"IIcaGfI1zXBq+WIofV0rmSKP2qBcQdb4TkAtuFIjNZUyBS9+FEnEc4j7wBJBZ0D9ThyHGT9OiFAaf54XvuW0rQPwAfHZDtHsFOPoUnMqXuMq8zDV84hhI1bR4AiYscY/"},"2d2ac99a35b97e7c80e422c4":{"iv":"p7q/jTyyqrKPr8CObFr5RA==","ct":"kJM/XK4mgZkmvgsDBpw0DLmkRnmjlaDbUfjYyWvDS67CQnnohRe9bTsaQM+JKnrw5lejLn9rI1DfeXFWf3O2F5jYALmO4rSw4q3E73BHKEbMwUQI2podf79JZ9FCRJzN"},"90bf6e6d61675052cd1c50e9":{"iv":"NSYnj+b8SEcZs/rWitYOhw==","ct":"HiYr1ay0CQPqrqhIabxJXh7IWsOp8w5h1q53Eg43gEjnZS3/H9AsdB2zj3+FBfasw7bXeTt8ZezWw9ptsY8c6u+WKqWsJI/l2f1qDXJUmAP2w7yInW+MnEQwfzmiNE0A"},"05ae38fa6a53fe61e95d9831":{"iv":"Vy8x7H/uBaj+3IvSjVzdiw==","ct":"HyMdRaKRGOgo3YyJhf+2Rhr44iV6+fSLi3wdpzsVjhTuQwZ+WlFQgXQWkmVHWA6zTu3sEbosmTmP277B2UgCc7ye0+A1D3DZrGX+Ukh0QcevFg3/xsazM8fvT/xZStgt"},"78810e41039d4c2f8759705a":{"iv":"dUSbbDNwszeCe/p3NCMA+g==","ct":"bHf3uaHVdkjmmQ+4vlJdpd4DUyeF1QwnZL4bi9OxuZgc4uM8r7v6u7bUWtKdRQ+FVDcB92iDE91jkrHqqrPXzkDH4J25DsC2jPhbRC9RTxwOVXxsveREWgXdOpvavlXb"},"15577c1019c3db5a28c3639f":{"iv":"QjK9ZmYSyuNm+DxgUM0gCA==","ct":"SopN2f0L7ypYW4re6S7AXOcSgsrMKs9MgolXXTRuUWN+LHrbLsJOY3SoMwvEAyybV3WsVAb+VELw9DZMvsSJpumDTGrqzULfHmUC+Qh5KS8KuYXdwu2+a91nYTvO3Kwm"},"5994a933e6dcef7a808d763e":{"iv":"RRkZ8GXgNWHEk+YWxtv6Qg==","ct":"1zaDTcBnAJCjrP1Nw7NlBSCiorTqy7jJNS2KVvBMEaFqlOrqvM0y1R9gNoy1SGpCuTquCNdsb8plaoStTSlCp8dqYRNx+F6FB4QlI8pksUNXGFD2wM8MVMWUNBbaM6xR"},"8f38dec3b77ad3ca6ee8c24a":{"iv":"QiPr5JA83O7BOwJpY/aSkw==","ct":"iotIRMCx6M0oCd9KRI7D/rokxxM4OSFyAHyVJ6+vjA6OU+eCS4FvZztJPpcq/epmcrgSU/DGd2kOGFE3wP17pxaA7F7ZEb4qY7vN1yLKLznWiScDt3Zh0TAm+N9z/FO8"},"0c5bd33a0f4c250a9ebbb0f5":{"iv":"T07VB8xGJZIB9ZPthhqyOw==","ct":"OiZWNg3ymSuxR7FSgsJTaBPbzHMLxLCddeV3vGnn5YK660GcuRUZ4dT/eJ1yEsN4D0eq5xXd9JbZzSYq2+hbG7nyI5S1SrTgZmvqERmaEpn7y3ErfdO0HMs8duGA/qBj"},"3013f1e0948ba1a479d7ac8e":{"iv":"r4eOifa2QUB5MqA36UPYYg==","ct":"v4efeeNXv8F3WYegTe26zXLwMsHL2JO2E27oANp4BaMjAgN/Z3SRtTWxiA6WfTvt1giWJfMH9wlZTLyO2pUjFlnwEAYeEj1shUJVFZ1o5LkjhHnV7jNmk0dFfEJVkiky"},"a3c3781fb8d61f36e872eb56":{"iv":"U2rK0VR0SWnNu3zmQU9q1g==","ct":"e1slgarWDSXxyJSlMlsvz1cW5o5HqVLNNOtXJ9xzB8fFwv1IqpiFHJvXkW9CAA1c1qpKe1UBHKC8d+YCrbjjsM5kVydosr4o0VkA1+ZsyuPQpAWZYKP1I8J/nHkwMQHu"},"622e1c7485afe7c8913c3302":{"iv":"58KdMn8euKNxLsSRkJfMFQ==","ct":"CJjvx9BWcCLdvb4E98o0xiEmnYFUKPhRfqC+kIViFylotxlpgBaKMj7PJI+EQ6bTpRbNylXOqb/ha6DgZC1xwS5jXk27XV6g9Daes9x3JnELk/QzAsbU1L3I6ByRIhbL"},"9b362446d6a0396b272b2c53":{"iv":"r98f1cBIHUVEyyNtoWVkqw==","ct":"HJoim3nsm8PvqXPcJpUNdEJ/bXvveZu39iThe09clxvFK9KQ24KDRtg67y6NI4j7XSwWjsFNzBNdEAhiPLn3VvP/O1jVzGD8uAf0ZLLojz3KmbVyFdrQ6xbkxPm5dc26"},"ef054bbe9437ad195c50447d":{"iv":"cOwOxAO79d6x0RaquhgSiw==","ct":"NXvZdn9AnOEj+VJvbrmLDpGvgrz4WeGc6hvhNHDM5MJbhfA2joWFosZazhygo6b1+41qsglqeWg+RAtH0zY4ti2BYJpbXXWbWgzdMl6Gb1zMF7lyxU8zBtpJ7KIAoxDr"},"0e507e0eff53400c2dc2c459":{"iv":"vgrJJq+gGd6nBfieChrqBQ==","ct":"4W9rSB3X6uxAY4IL2arrGlLw43v/jVWSRjXVdi0WWbLWv0DaYQkyYlaelDM1HBvdWKj1EVVDRRO0+JxZYnMlfut5vzj8k8GS/TW9zCxKdpGf2Gipg6mI4iFuxYUwpxim"},"f94668b27c10fbbae678aaf0":{"iv":"SP40e18vwUlAtnKu8xdD1Q==","ct":"/vOe79oQoXuK5+e4nRoLVkCk6S2og7dXXOQqLlYGtJ/aJhdYTPlYITx0tvsmaijCVK2TQirswMLGL0l2wihrc2H3zwmpbwRg+JGLDhmifNJs2UuqSnKM+2BDYWTj2dLX"},"1b0f2aa294b271551559aae1":{"iv":"+Mq4rL1ZksuPT7lcKCFvUg==","ct":"SxKVjcwOBaS1W4hHOHtCQvJoT0jyum99bk371xKlvTEWVIGaivGUX6JJ9iFDnVud6t4dYusaBJFPo3s9f4nOulTX8phohSyZa7UyOpeKJJTEbWYwIruM66A/3U0XlUj8"},"7d25d7cfba772c5d7652761e":{"iv":"NBUfqHQOd92iZJ7s4u2/hA==","ct":"ReNnCF9bl9TWi3FwHgdGbwDsEa6jFpSrcPAIQjeoV2PPFNF23yFg3q1TQlqPLC0uqt8CF8iStpNr6tQ9PO5qCkO5Hs4asa8taDP4+h92nX5w8OaX4i13fHF47J2btDzj"},"a9f4eb487ab1806c80719a19":{"iv":"FD+3vfR3oDJLmHj956Ud3g==","ct":"oFZWunK1B4dJQAoFoIKwfhUA2FDGPfc6qcnC+1Z6QJ9UrgXgtW/5vv6Dp7hUFIODkSMKfvT7WigqPcNJqTfykLPcBDclWKYXCSV0+mCP6OZtujvq+uy7CJws9no1pQtD"},"227d4ad4aca45e7b9967f83e":{"iv":"q+YPUQVP/MUlgApCCpazeQ==","ct":"1+1jATXYFkTL5w0Y5pbjW2ARov3QLbkEDNS+I7PiQ8T0N2L/qj3zJE9sNLpr5kjF8bcWVxMGYq0WNql5Gt2Vj2pnQYUnBYHtiBIYa++DD1KZ2aqDtL5X87MzFhg1ru0F"},"d20b96071cadcf03c5b9a074":{"iv":"shBIcIo4Fd0Zb3E1/M3D9w==","ct":"uUrbx93RPLVuzZ8yoEV0dfYxZcFCpspr4X8xyzZ4/2YCQ3RwujjEOduvFuT9v2aA0H7ZENF45XZz21f3iUTNSN0ieh1H4evnGC6XzrnzWa0c8VzOjsNiB1aTNT6LZ1VF"},"2e1f27b9dd04ce24a2a5bda5":{"iv":"1fSOM7i60+p+r3QqOZBd8g==","ct":"an1xKAPVX+PWhgdfrt1mSVccZff7J1nTf/9Fc/J/vlMR6O/X48SrCn1mQJSSj8zQIgl/bH+ab5kAUEAIBYsjmqIbu7wx4OnIpYhJDGE2dFOmDXdpyTOZqOtz6bm9nOE5"},"c7ffcf4d511e5756dd7b4ffa":{"iv":"hPhMDKfsIJiQZtnsmODIOg==","ct":"0/hvatkASMCo+vNfURDMd3qXPASKILpiz0kWQhYdhSbwLTwbPD+h1qpNpd835q9cHu+D2nKCGz+du8m5F1WLHysHh0yrqfC7wgbOMB/U1LphGAWKAMhzSfz9vJlBVSgf"},"4030f31077b7ef0ca561137d":{"iv":"Of1hNm3sCYq7eqDFw7boYw==","ct":"yDzTvMzmFMIxY2V5Ie1jZzTSWp5zZ4Ryy2vjCtpi/F7gdYdu144xchvrO8EPalffK6WFBkPjhRLr0Y3zJ7MWneLkN/ZtgVr83E8aWftxic5KA62AWntLW6N6yvWhY5k0"},"90f4eea337a776aad9cadd85":{"iv":"yIBZGT4+/mLez8Kf6rVVGw==","ct":"E2SSm3/NhjuAkSoOxGyIrz8t4dmMG9yEmavn2bHI2HZJOF1uJ3G+U3yfJI09rhj7RYiejioT2aKsHhbcOvDNIpIcztHRgts68Z4nX6PiAD3kQD2bMAcrVMeDfXJQA6wQ"},"d113c1425853efc0c5174626":{"iv":"bvnup6PGhhuZHFzXQIfRUA==","ct":"oC2zisAVSVuOc1XUW49+d2kbwIwKy9L8wQGZuFXv8xhboPRyCmktW6VRWlhE9XUY5+NYznQC7ojB7XPOnyjEjbUAFANeu0iv7R77YxsyuWvDjopeV06QDaYT1g/hzFGl"},"fd3d6e2a8508e40ad4bba036":{"iv":"DoVv0qEyQYEKbN47QXgtsA==","ct":"udBnzkhTbklIiVxB1vImJBiPPxhshuTnDZxrXD/3Y1Qp3FSkNBrwXcqIyNu2a9it008BJ9t8lz5ujNtn8ueUMg392rHtrGPhKBjDqBp82oD2tBXormzT1ltGIHMDIpdJ"},"d86f79ee91da5abb4a67367a":{"iv":"/hpuWr7Z3T+woIM41fGfFw==","ct":"v5kDZYJJbFcoDAbaUaciKV3hzC9TTrCP2dfDobx+ikZrxB+fHsodKIEgk11i/pyHcQryaV7PhAg/muede38YgSMXBtJDDXd7RdzmfJ93BpAa4yZmBcdvISE5x7NsKkZl"},"528ea0d3beff6772c92542c4":{"iv":"LdQknk1nGplUgbQuC053ZA==","ct":"JRkSOe3RZT+7lX6YKpajgAPMGE4D0J5Dd8m3+a1M2AMj313FVtsqhod82FBDf+pEwRi9oVNycU9ARUedChpVeKmpDI8x6l0xnaYR3790sZrroPSboE2T6nUh3PouYrJq"},"6f43ad79d763e3842e684423":{"iv":"qdYA/X+FjSQiRw7Ay9pbOg==","ct":"CDeLaSFXx/EXmphIl8KtW9pAOKcH3HRff2cBZBU9vHBBG2ZTUX/RQYzrNj8+xd6D0Xk4NY6fUo39NuyIBSD9Gx2iN+/0oThJNVPCyN+TAI8BQXfCl0hn9tYsCCObKaM1"},"f29e98ecebb902fe9187a08d":{"iv":"AebC/qjWeVrpkvpcyGksJg==","ct":"tq5nuTvrPFtV69N7MADSjSmtfMkRNS4JYjCg3S9WdSPwzZ0ABHoQqdGWd388pniwtEKhy0jXxhCovC5498WtnFslAtraeHUNnLV0Uel2q3cMuI09NFEJB30nqXJQ3jFI"},"60bf4e9f48733cf2c93aa379":{"iv":"voEG+OHwwgALT01aOCkNjw==","ct":"bYDnTP/1fiGn9r8kM9jF5vvGm4kT4+zacZB51T0PsklGE4rkbrZXUizs6XFMkuUf14zm2eR6uEv0pO7lO0YCB0/U6jm7bxnhGPpmEjCHxKSYlB/XxPR38I0GMWMY68CT"},"0b20415af147c71e8377b02a":{"iv":"XT9wDVMHBF7gepojIesjJg==","ct":"u446KFwoQDcmbHTUS6mkBHp/vxBWKll0sbNJOafYjOL5cXtbI3aMehyBkSiaEDvkjVQy//pTE7CDr5BOWrhLNizeZhQBaLB2Yb6eAEqpIS55xRD0J9rWvCNo28fSFUHp"},"a09b5ef56d00774aaefa9265":{"iv":"nQmHG9PzMmAfhQuUdPBuMA==","ct":"8jsF/H6Ta/PIKpBtL7p38IeL710HJsMCCHkZfE+hfI4I2L6IP8E+j9ywFc4DHBQnsrMs9+42dpTzjorUjxt/oeCrpU/GSAYvi2T3JTyERqtiTtN4SwRS8WkHOA6Qe8F7"},"7a277779790300232c9fed5f":{"iv":"mEnwoxaVudh7i9Cb3C/w9w==","ct":"a7Nw8WUjgqXHCiwsq62e+riBg0BX0epfHiG3Tz8R44IYRsQiDw6nvQdQBBlkZkWDx3KLafvrGtkK5VTygqj97A2gINWM8wH3WqQRVMyckCa6X9wUwu4Z2TO5qJ0Pqt1W"},"44f3ca9a1bc2c71812b322e4":{"iv":"JX5mH+SY4WLCNoPz/bmPjA==","ct":"7fyzdTpOfO9OvuS78iqZuCzDPuVbs4HRn9Q8e9Z0lontWwqq4RJXvc7fbkaZqA/NjsHnMf0E4+mgtBB7TTYYRFlJR0yGGTiu/FRfel0v72jsTLqxPFF2ovlAqYiJNY1S"},"f8d93f81ab415ffd0c20d1be":{"iv":"C0wKyprXVFd2souZbPM4GQ==","ct":"bCeJ5EXnNq5xT+Q93/K0Q2pmPrDWjLfAa07cy4mnYbZ31KOd5YzBqdeqPu+9qZyPBueMctcijrQMYvUKfgIfXp0oS8Y2BD867kzjJVdAdNlRuZpWaDx0aWA5KIHcj8Qn"},"4acd216c5d8cb4e8479de123":{"iv":"tt/PvPvhc7wSXiVXQH3x6g==","ct":"7UYYyJz+J0G8wme7I4G5O526+tpafY4VtKGF2oFM7PVdK/K0it+N2fz3V8ReHOKPdlmG1sWqg96uE2cDHIVhbbxnyufy85nj95gHN2QMC8fhVtkGsVYxP7rAgSBnRKST"},"921b557d0c25c57b4dfec8d4":{"iv":"lNUYRf+meviBEkzlMhNOQA==","ct":"uWpF/cP4R4sZoI+pBzvt68o6rikJJ2I73kGdtKl33vqadjlwXjkIGcCi8HJY4xl2Nd+VGL1/x6Xkiz01vgNrdWqLJp1kTQl3C50YtHoqJ0Vwv8k6pxwqmJ6VS5oM/rb8"},"e5a27419eaf150bf62d5229c":{"iv":"e8cuPjY1VwuscJ2yMKywoA==","ct":"deMjf0pj0Ew8q+5b6uI3emHP8v2ENrXV0ZqjZ+4+wULJsn9GoSUCaYewC+LvZSlxgDK44W1rPHWddqEXmdFMAb7FNIpazn28wsdSHNSqAMUI0tpsRlXGAdfz1lP5KlA3"},"29acda9d85989576fcff9743":{"iv":"17zHcm09FgJE/PH7zWSWtg==","ct":"0HzbGCuC2fm8DTlzc77u1JjdicHpaKdXXJMjgSrCZjfQyQms7GekGr6QqKKWgdtDl3PBOyhMPiMNWAtvxMxYqcO19HF/34p1fIsGlU/VB74ZmCaPNpBQOsoyLsSsT/zn"},"8c7f3bacf4316dc847f906c6":{"iv":"GZT4HOoG1tPK6VTV2pPL9Q==","ct":"blCahUqBtAQ04N8+14mA6rwZ189Tan1Ag7F215Q18Lpwk0SqNVjoHYbLSLvdKO0Ejc5kUgVC1PyH5O91JjqEvM/OxI29tpGvVPNIRMlvOdNf0rCJ2WSgbB1uVHB+A+av"},"5d69b23a3a165e5c58a75a2b":{"iv":"jmPtiyrR+C9ah3x4Vg/Iuw==","ct":"I8C+Qdzc6yn3LoKXlAIuUsM7OeAr76fuKQg4QRC8GO7XjpSHDVV+Fet0K4Q/OUnpodYp8QhpQ6pyL3P/nogLjSyf1uQzwF92u3moZnsk7yO5LNJ5BRqzpDCB4c1AlTur"},"692e21442dfdc547d3b1dfb6":{"iv":"gQOmVQlK8Bxp0yP2uvMx8A==","ct":"vqWPhivIkc6l6C5WZ9C6xgJARHdMM4HKDAbiqduz8szAYBBUMmBXGgnQKQu704elUKzPTzADJGSCedniV/N+1ZmIjisASHYIzmVj/KOAsg0Rj2bAAUThMh4AFoJYdLqX"},"794d16246debad5d66614b78":{"iv":"NgC2N7NO3Re7VzEZO1ihWA==","ct":"9AiAjPFvDnZJgI8AaIrCY1X18GuKSouz6Bavj23r0aQIUe6whIuoi/mkr+Z250Um/TrhgTz6CKcwa9Jo9XC+U0pkZ2FiKMJryM9Br+e/pntG41TR9a+CCGO9gOcqn7Av"},"127dfca2512769f3c734c7e6":{"iv":"LfQy/0MjXZGgbFybC5Akxw==","ct":"/+FyGRT511+6sMySy++Ez9GF8rxQKts2tUbqkhXbGT7L1uyFOBHUUZxrUelvHQcTNCDh36P57q93coOBC/oU7Spp57xuwXcrcjLDukl+vF+tbXRtBWw0PUoLBMDuy/Fw"},"38de0273641bb1be08fe0ccc":{"iv":"zG/08rQIHTfJNoquSXwzLg==","ct":"6z/K8wzvNwTE/pG1D6lfy4WANOAPsW05eK+Z0nRu/PidPWviuKki4nNVUZKuy3zdwdT2FqhKxdytYHlv2KoGExZkbXFayqrZbA5EFcoIszkAmCCXHHdt58XtB8LzPjCa"},"f52e43c863c519a7910ca591":{"iv":"EAqxs9NdGJLMcR7NB4cqgA==","ct":"6lRNl0RAbPYAOxhnsVktrLJdRV/NNpIlrM0hoiQiSde+HpcAdOzB4pkCeCzbQ82Zj13LkN/bkN7cdT2yOVFe2Am8FaJA6oU5Ny25/1Ua/BvKhSM08D1/HoQlm4iAXgVo"},"a5fbf8854a3eebe7aa764a6d":{"iv":"KReMum2Pqpf+cF2ABTSWqA==","ct":"1bX2Z1ulRqt/J7AFcfrtyueWHg32tquvbRQfiPVF4zM6zZEzwtRw8pajyLyaQ8HR3zoDXlaH75hJ6MUMgOsrcAFmTzinG8ABDZtTT9e6t4nGP+EwWGc3azFWh5iU7iYU"},"af04551a26d49a7672408c42":{"iv":"OyFXSMihNtx8Npv11bO71A==","ct":"HlE7NpyuCG8UyHbEdzHCaxzp4vKHW4xQnfrhoLGeYelO57IsYN4DWD2KpeieaC3EfNWny95iWXrPXQkutoHXHO/ZP7byqPppHb4oiQhLEKmGOnEmpLICQqe6ogJQZ74W"},"efff6431e678d44261a8e853":{"iv":"E5dXY4dPurQR07ZJd+YaHw==","ct":"EX13enID4GE8oZKnfqA/+Y7QQgiSqZyUa6gQYfHd8b/wjrOxDfgH038BU6dpVXgvG+vb9xiz4+kEjQra6LkrCGR1qIqHXKXTZvoDa/y7gFIrQT2j7pUZbUnlOK3txQvA"},"f31b4387c99f252b963416cb":{"iv":"tt3WEMFnp1L+75w9eLY5nw==","ct":"0dVrenwqCVWizYMOjLHxsLEtaZZB+cXoptt04A+V5ce6pVnF7vzFclMk+Gb0Kn0aRKI1bRe/P1dMTbdsG3XrldjEYvrGidcnObrKBEOqtkekNTKE/zkrgSgz+rYEWnfq"},"b122f8f13f39a0c1dc943ad6":{"iv":"PFEL8CEYkifFJJ1cblGTdg==","ct":"QmGMG2CymdTE1Xus+MwtzVAb+E6z4J8IPqnK1q1DjHuaavP93GR7jqofMcUvY3mUXfuYVjbTotn9YACIw+KAlhjbUxzpJ6nueFPQ9D7ZS7R0QfA/LGgBUe+VSnWGJkWz"},"9e51200aca9b97058f627a67":{"iv":"snUgTepkBsFIb+ZMY4PaTw==","ct":"/6ioMNm/GkBjL4wqTjdQAgE5H6xhoJpaX/pFTbvlzEigiCH/K2bCcLca8Xq6pk+Cg00mPB2WgDi2tUu8y35Y9dT7MdOxpxnSrqLSMuc+UA/AX9K9ynJrtiaYnwlGJ5oo"},"c48fbc3e59eda90d9414f1a6":{"iv":"WGB9bcwvcYzEsjl2QIBbnw==","ct":"QMg9uv7HOeIZFOqPaP/HsP7N7/gPF6bGZmA/a4/vxlLQvgF7ok2sNF4YrpBVVUNO/EC3DZ+j8QiC9OadGUhmM8OEuCcBqx/riUmSNReLAc4+IEClwEXlChOMr99QYPMF"},"5d169d8728e242f2189f60fb":{"iv":"sMn0N/ixcvytIo8NBG+90w==","ct":"u7RfK+/ZJrCiRsnNW83AT4M0KEtwhylcNmt9PUWMtxvjLbXidW1V7z8/oGFP6fFdjyZ4498ygKuhbrmk0M0+HivI9/EdIfMXeUBDQ85V4YddFB+n7IEoW0is0oVsMYl4"},"3ad722f4d76d1a37cf384934":{"iv":"DtT8/PtcCYgx5+2K7ORWaQ==","ct":"qHKQ/66Vp/t2KUYhMKRq3OufW5mnWYONuE+G3VfWZ6kFyuM5dHAtUWBk27740uQsTf5QCUkqRoi+IIcEJxvzcvECD1/28dUJeRy1I+OJntpCSQtG3WlXEoxeysTCYkxF"},"afe845e2cc31f4f31e644cf0":{"iv":"JU5NO3ZHLcXbJsU4afbe0g==","ct":"1zM9QzTwRA8xvD0n6EakwTfgwow3aDNLAXxXmNh62mXwHSwW/PtnfUJP0H/EwcekPZfSe20tiDiAWQ7T1oDHB0HP1KEeSlpzZmQ+NYkieVEx9+gYP6yKynEnSxptYgqa"},"2f4f74147dd5ccc99abdfe20":{"iv":"eTE3vh/FbIlKSqm3cejebQ==","ct":"DtZ+13btKkxKwmd0+LTZkArBUt0sNallTCzQWmaeMALGLZ7itLV8MGe/8qcAifWmSL6myKnmf5HRnHdHBoek+H4zBBdJ9688DotCnnmb/fqAzpfZmqDW4U2D1/oBXB5t"},"7b1b90fd9097dbe99ce35e4f":{"iv":"gHd5Pqh+LDSCgQ7OG7QB6A==","ct":"t+gxlvS4m6yn9jmxlyO1LtUK7dXD/9LzCoX/tcZqx0BZNQyQkz6Aqq05vyUIcYuTM773SA/NvEGmyV81o8JMgNzG032sF9onpu0XyZpd4LUdUE1D6DAcHBfJfI78MJFv"},"fe81b5a1151ccab158c019ed":{"iv":"nR+kZNpXnYMZwZ9bz1EggA==","ct":"HAPUb3eFUusbsjqWYg7ZZFHQEh+zuEgXLecfFyUqtg3Yb3CIiNBQ2hZWy4zDfZ7o2Yeevm0+RZexF7DSVBCUAgLcWO6nmPp8kfGlc6XzNpg75x51+Pb3cLj3lcczUC42"},"78c91e1b877b20b8e4dbdefa":{"iv":"GB31oS0d1iezRTCxZUs/tA==","ct":"Dg2Nx7SSvWMbiadNPxoAeyqkb1/kOzPVAGYTBLcGxNDpUlHGW8Q3C6XRwJoymUUadGN32/IUZv2eBsqOIAxoTRhdihzB9XcBd1XhHhOTEBAgEQnsSmFD9JcotnqNWFSd"},"5740a92cd23accc097ef957f":{"iv":"kmg8CPiO3oCtw65xsUBbRQ==","ct":"GgXHa/V5keDsueeuGq12kOXzGH22sfLrTl27CYlAHga+8ptSaHQd7IvPvOVgEtgJlRFZTy9rSwoI1FSGb1BY5/EbZljl+KqWGOak9DSNcz1MJQEyFQ49XBk7gI/M5l5c"},"7a927547aba3e7133bc3fcc8":{"iv":"BsUGPf8qk79Ski0OQmRwmA==","ct":"jv4M5kbdxb3TMx/xwV5onRPujBH2HMipzSU1GBE0M1cFqGnWyuxphsKXzjXWSvYkgi4IYyK4/JzIM0M2M8Q1WLYj4AIG4lSb1lDG5zgLPmIAwpQAaf3REIVLBioyCkAp"},"8f1bfd5c3aada985d3fb8c8a":{"iv":"hGrxGeIuILX0YyQsiwencQ==","ct":"OeOY4ZlXodar2wzM4jhKKv5oV2/ipccGcz3hTxHaNCelscV491Z+COI/3S5mVXLJK+UWl4dhO9JZRfgpWmKBW/wnPufZPehzshXMmLHLk3NimowaLveHA9lMfK8kaHcj"},"9d37a453bcf10a7dc6561f67":{"iv":"EG5obS8dAN4H4q/7X2fl7Q==","ct":"6cSvh+POmRhUwBXr8TqIeAJWq81rHDyB91Y9b/x7WH1PRrhylXz/LcCzgbFQxJM++137NrVpmPFjgQAhRa+hOTpJ0jJ5C7OAA723zitMSjM1KG2srVMUb9MdAvrLHMnC"},"9b0ed5512f256788f75cbbfb":{"iv":"rJaxXDvEqaZ+n4cSsKa5WA==","ct":"EZkyqslQ5PajwRO+yp8cU69Nr30j0U7njJV1i7TbUFuJYuQ0yEH/F6rADejWGDr+PojguLXMyGxLxjT6N1N4QBUSHj0ehrsLyGec0Htc4UGdswVKScPAZvNMS6nbLTi2"},"ea989ac818cd984e52248193":{"iv":"kYybo2X8JllwAJ9GkX0aTg==","ct":"x7d7/rmS5acxlZ0ROAlcXy+Um5U79S2OBTJaQbmJPpvZ05s8lemg30cyJeMh3NXwjqk5yxxZB2nfxD9vUsQnPemDnoD7ImX/9IvsdQehpsiTiaRU631z+Alc0S5HydhH"},"b570934b17fe6aaf472201af":{"iv":"fUIujepnyvCp7hkYUpWt3g==","ct":"OGzm+uWceeKuDkmJEjjoOQsICF8TvgpsHJbBkNbe5m1EQX11qZYneiO38rIHzld6aMvDN2KvoebGXEOPdA8HTvOIQD6ciz0/qu4m8dAYCcx3r3Dwbf8kERBrwwHxmVYB"},"080696a4e0c4f930d9b42c79":{"iv":"+k6PippxNienRK/4GeQu3g==","ct":"LWg9JT2qZBrHkB/lF+yEOhtDmydq9i7qb2Wbuhrmcj5QwOy5GpUqIrOxS3khBBlg/VqTpc6XIIWvBkqJrRW7Qpp+n3lTl0I0IDtS4Fm6IPMY5J1jZkZ2BNxOh9NX01tO"},"d33a18705097b16509b97e04":{"iv":"bS1ikUAU5kP1MM9KParAlQ==","ct":"ZKuVpcJ6gR6uIrtCQKFeGQsDxUglwbA09ERQR7yEAzXFNHtHPmGSssT6tow3c/8OnbWVpGeqonqTBUdLuyxrlayGIY8841T4hyj5HvPoUURU/zyJ4dvLebGDclspTPHm"},"14e8c09b5986c05f9f98191c":{"iv":"mVP6KAPhPGateGR7gwc0NA==","ct":"l5K0nuCwWIoxTZoNGVyqmGOrPDBa8TqWHWGiLWZPu6M4QvA3wWB1mgZXUJELY6Cc8XOtAfYX2p/8EJnOiRb27Kop6XtLVeoUSCCaSLwAxbIucEr4EjpHirD0ZjGlLBHZ"},"fd40ed578d6ab470ae75be24":{"iv":"U4FPOE7eQR9Ho0pEsVs3OA==","ct":"oMusykg9d+ThPASiGzX/jbtJagCczmeV+RizluPJ+WmeNATR3alSsTfl3EcLWK9nClQlLg6awnZUoJgN+5kpj6TxnbBGTxlTnT97ZR/vgPLPMBZV6KYa61jcNKBimVO8"},"dc98ab35e9ae5317b7b4c448":{"iv":"K73pE6kMU3vuf+mC+MWQeg==","ct":"+ER9S8i7ALJwU0lacLTlyxI6JRIf9JTvkCl0uWdlUDX3XimjYbabbDwATAAZ3XaQMk1RSiH0qx69dQ3tM/ULl6nyF1FdeZHVzubM0naMsAZxyVQopqMIxiNU7kPoYzuC"},"2971bcff19634f8b7aad59db":{"iv":"KmEeZ1b1FxEs1X6AYbwSPA==","ct":"K8zPe4PjIGCbz0jfbSwbF857p0AUr2PdiEa9s+98k/6kCj6M6l+KXSlne5mqYuL9+lhK4ZzapiQxRD5lWiXBb7rkrO4ABi6j95aI2g38HZbDw9eXWVJxX5zwQfuF3uzE"}}};
+  var AVG = {"A":24.83,"B":30.38,"C":13.6,"T":68.82,"n":76};           // 응답자 전체 평균 (개인정보 아님)
+  var ISSUED = '2026.10.06';
+  var FILE_BASE = '패스트캠퍼스_HLDS_전사 AI 활용 실무 교육_진단 결과표';
+  var LOGO = document.querySelector('#gate .logo').src;
+  var enc = new TextEncoder();
+
+  function norm(name, phone) {
+    return { n: (name || '').replace(/\s+/g, ''), p: (phone || '').replace(/\D/g, '') };
+  }
+  function b64(s) { var b = atob(s), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+  function hex(u8) { return Array.prototype.map.call(u8, function (x) { return ('0' + x.toString(16)).slice(-2); }).join(''); }
+  // 이름|번호 → PBKDF2-SHA256 48바이트: 앞 12바이트 = 조회 ID, 뒤 32바이트 = AES-256-CBC 키
+  async function unlock(name, phone) {
+    var pw = name + '|' + phone, salt = DATA.salt + '|kdf';
+    var hasSubtle = window.isSecureContext && window.crypto && window.crypto.subtle;
+    if (hasSubtle) {
+      var base = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveBits']);
+      var bits = new Uint8Array(await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: enc.encode(salt), iterations: DATA.iter, hash: 'SHA-256' }, base, 384));
+      var rec = DATA.records[hex(bits.slice(0, 12))];
+      if (!rec) return null;
+      var key = await crypto.subtle.importKey('raw', bits.slice(16, 48), { name: 'AES-CBC' }, false, ['decrypt']);
+      var pt = await crypto.subtle.decrypt({ name: 'AES-CBC', iv: b64(rec.iv) }, key, b64(rec.ct));
+      return JSON.parse(new TextDecoder().decode(pt));
+    }
+    // 보안 연결이 아닌 환경(일부 사내 주소·미리보기 등): CryptoJS로 같은 계산
+    if (!window.CryptoJS) throw new Error('crypto unavailable');
+    await new Promise(function (r) { setTimeout(r, 30); });   // '조회 중…' 표시가 먼저 보이도록
+    var C = window.CryptoJS;
+    var dk = C.PBKDF2(pw, salt, { keySize: 12, iterations: DATA.iter, hasher: C.algo.SHA256 }).toString(C.enc.Hex);
+    var rec2 = DATA.records[dk.slice(0, 24)];
+    if (!rec2) return null;
+    var out = C.AES.decrypt({ ciphertext: C.enc.Base64.parse(rec2.ct) }, C.enc.Hex.parse(dk.slice(32, 96)),
+                            { iv: C.enc.Base64.parse(rec2.iv), mode: C.mode.CBC, padding: C.pad.Pkcs7 });
+    return JSON.parse(out.toString(C.enc.Utf8));
+  }
+
+  // ===== 결과 화면 그리기 =====
+  var AREAS = [
+    ['A', 'AI 이해도', 40, 'AI라는 도구를 올바르게 사용하는 기본 역량'],
+    ['B', '업무 활용도', 40, '실제 업무를 AI가 처리할 수 있는 구조로 바꾸고 적용하는 역량'],
+    ['C', '자산화 정도', 20, 'AI 활용 방식을 반복·표준화·공유·관리하는 역량']
+  ];
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function f1(x) { return (Math.round(x * 10) / 10).toFixed(1); }
+  function diffTxt(d) { return Math.abs(d) < 0.05 ? '평균과 같음' : '평균보다 ' + f1(Math.abs(d)) + '점 ' + (d > 0 ? '높음' : '낮음'); }
+  function sign(d) { return Math.abs(d) < 0.05 ? '±0.0' : (d > 0 ? '+' : '−') + f1(Math.abs(d)); }
+  function render(r) {
+    var rows = AREAS.map(function (a) {
+      var k = a[0], mx = a[2], d = r[k] - AVG[k];
+      return '<div class="area"><div><p class="name"><em>' + k + '</em>' + a[1] + '</p><p class="desc">' + a[3] + '</p></div>' +
+        '<div class="barwrap"><div class="bar"><div class="fill" style="width:' + f1(r[k] / mx * 100) + '%"></div>' +
+        '<div class="avg" style="left:' + f1(AVG[k] / mx * 100) + '%"><span class="lbl">평균 ' + f1(AVG[k]) + '</span></div></div></div>' +
+        '<p class="score">' + f1(r[k]) + '<span>/' + mx + '</span></p>' +
+        '<p class="delta"><b class="' + (d >= 0.05 ? 'up' : '') + '">' + sign(d) + '</b><small>' + diffTxt(d) + '</small></p></div>';
+    }).join('');
+    return '<div class="eyebrow"><img class="logo" src="' + LOGO + '" alt="FAST CAMPUS"></div>' +
+      '<h1>[HLDS - 전사 AI 활용 실무 과정]<br>사전 진단 결과</h1>' +
+      '<section><div class="sec-title"><span class="no">01</span>기본 정보</div><div class="ident">' +
+        '<div><p class="label">이름</p><p class="val">' + esc(r.name) + '</p></div>' +
+        '<div><p class="label">사번</p><p class="val">' + esc(r.empno) + '</p></div>' +
+        '<div><p class="label">배정 분반</p><p class="val class">' + esc(r.cls) + '</p></div></div></section>' +
+      '<section><div class="sec-title"><span class="no">02</span>총점</div><div class="total">' +
+        '<p class="big">' + f1(r.T) + '<span>/ 100</span></p><div class="cmp"><p class="line1">' + diffTxt(r.T - AVG.T) + '</p>' +
+        '<p class="line2">전체 평균 ' + f1(AVG.T) + '점 · 응답자 ' + AVG.n + '명 기준</p></div></div>' +
+        '<div class="scale"><div class="bar"><div class="fill" style="width:' + f1(r.T) + '%"></div>' +
+        '<div class="avg" style="left:' + f1(AVG.T) + '%"><span class="lbl">평균 ' + f1(AVG.T) + '</span></div></div></div>' +
+        '<div class="ticks"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div></section>' +
+      '<section><div class="sec-title"><span class="no">03</span>영역별 점수와 전체 평균 비교</div>' + rows +
+        '<div class="legend"><span><i></i>내 점수</span><span><i class="mk"></i>전체 평균</span></div></section>' +
+      '<footer><p>※ 영역별 막대는 각 영역 만점(A·B 40점, C 20점)을 기준으로 표현됩니다.<br>' +
+        '※ 본 진단은 교육 수준에 맞는 분반 배정을 위해 실시했습니다.</p><p class="date">' + ISSUED + '</p></footer>';
+  }
+
+  // ===== 화면 전환 =====
+  var gate = document.getElementById('gate'), result = document.getElementById('result');
+  var form = document.getElementById('lookupForm'), msg = document.getElementById('msg'), btn = document.getElementById('lookupBtn');
+  var current = null, fails = 0, lockUntil = 0;
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var v = norm(document.getElementById('inName').value, document.getElementById('inPhone').value);
+    if (!v.n) { msg.textContent = '이름을 입력해 주세요.'; return; }
+    if (v.p.length !== 4) { msg.textContent = '휴대폰 번호 뒤 4자리를 숫자로 입력해 주세요.'; return; }
+    if (Date.now() < lockUntil) { msg.textContent = '입력이 여러 번 일치하지 않았습니다. 잠시 후 다시 시도해 주세요.'; return; }
+    btn.disabled = true; btn.textContent = '조회 중…'; msg.textContent = '';
+    try {
+      var r = await unlock(v.n, v.p);
+      if (!r) {
+        fails += 1;
+        if (fails >= 5) { lockUntil = Date.now() + 30000; fails = 0; }
+        msg.textContent = '일치하는 정보가 없습니다. 이름과 번호를 다시 확인해 주세요.';
+        return;
+      }
+      current = r;
+      document.getElementById('report').innerHTML = render(r);
+      gate.hidden = true; result.hidden = false; window.scrollTo(0, 0);
+      document.title = '[HLDS - 전사 AI 활용 실무 과정] 사전 진단 결과 · ' + r.name;
+    } catch (err) {
+      console.error(err);
+      msg.textContent = '조회 중 문제가 생겼습니다. 최신 브라우저(Chrome·Edge)에서 다시 열어 주세요.';
+    } finally { btn.disabled = false; btn.textContent = '조회하기'; }
+  });
+
+  document.getElementById('backBtn').addEventListener('click', function () {
+    current = null; document.getElementById('report').innerHTML = '';
+    form.reset(); msg.textContent = ''; result.hidden = true; gate.hidden = false;
+    document.title = '[HLDS - 전사 AI 활용 실무 과정] 사전 진단 결과 조회';
+  });
+
+  // ===== PDF 다운로드 =====
+  window.makeReportPdf = async function () {
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    var page = document.getElementById('report');
+    var canvas = await html2canvas(page, { scale: 2.5, backgroundColor: '#FFFFFF', useCORS: true, windowWidth: 1000 });
+    var doc = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    var PW = 210, PH = 297, M = 10, r = Math.min((PW - 2 * M) / canvas.width, (PH - 2 * M) / canvas.height);
+    var w = canvas.width * r, h = canvas.height * r;
+    doc.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', (PW - w) / 2, M, w, h);
+    return doc;
+  };
+  var pdfBtn = document.getElementById('pdfBtn');
+  pdfBtn.addEventListener('click', async function () {
+    if (!current) return;
+    if (!window.html2canvas || !window.jspdf) { window.print(); return; }
+    var label = pdfBtn.innerHTML; pdfBtn.disabled = true; pdfBtn.textContent = 'PDF 만드는 중…';
+    try { (await window.makeReportPdf()).save(FILE_BASE + '_' + current.name + '.pdf'); }
+    catch (err) { console.error(err); window.print(); }
+    finally { pdfBtn.disabled = false; pdfBtn.innerHTML = label; }
+  });
+})();
+</script>
+</body>
+</html>
